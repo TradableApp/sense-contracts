@@ -18,7 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: write
+      # Read only: this job answers in comments and never pushes.
+      contents: read
       pull-requests: write
       issues: write
       id-token: write
