@@ -5,8 +5,8 @@
     "": {
       "name": "sense-contracts",
       "dependencies": {
-        "@openzeppelin/contracts": "^5.3.0",
-        "@openzeppelin/contracts-upgradeable": "^5.3.0",
+        "@openzeppelin/contracts": "5.6.1",
+        "@openzeppelin/contracts-upgradeable": "5.6.1",
       },
       "devDependencies": {
         "@nomicfoundation/hardhat-toolbox": "^6.0.0",

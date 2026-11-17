@@ -39,5 +39,8 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Format
+        run: bun run format:check
+
       - name: Coverage
         run: bun run coverage

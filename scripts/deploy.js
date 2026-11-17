@@ -1,39 +1,17 @@
 const hre = require("hardhat");
 
+const { readDeployConfig } = require("./lib/deployConfig");
+
 const { ethers, upgrades } = hre;
 
 const VERIFY_DELAY_MS = 60_000;
 
-function required(name) {
-  const value = process.env[name];
-  if (!value || value.trim() === "") {
-    throw new Error(`${name} is not set. See "Deploying" in the README.`);
-  }
-  return value.trim();
-}
-
-function addressFrom(name) {
-  const value = required(name);
-  if (!ethers.isAddress(value)) {
-    throw new Error(`${name} is not an address.`);
-  }
-  return ethers.getAddress(value);
-}
-
-function supplyFrom(name) {
-  const value = required(name);
-  if (!/^[1-9][0-9]*$/.test(value)) {
-    throw new Error(`${name} must be a whole number of base units (wei), with no decimal point.`);
-  }
-  return BigInt(value);
-}
-
 async function main() {
   const [deployer] = await ethers.getSigners();
-  const tokenName = required("TOKEN_NAME");
-  const tokenSymbol = required("TOKEN_SYMBOL");
-  const initialSupply = supplyFrom("INITIAL_SUPPLY");
-  const owner = addressFrom("OWNER_ADDRESS");
+  const { tokenName, tokenSymbol, initialSupply, owner } = readDeployConfig(
+    process.env,
+    hre.network.name,
+  );
 
   console.log(`Network:        ${hre.network.name}`);
   console.log(`Deployer:       ${deployer.address}`);

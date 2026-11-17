@@ -181,3 +181,6 @@ ignition/deployments/chain-31337
 # Generated artifacts — not source
 file-structure.txt
 gas-report.txt
+
+# OpenZeppelin upgrades manifest for the local chain. The manifests for real networks are tracked.
+.openzeppelin/unknown-31337.json

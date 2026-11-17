@@ -4,12 +4,12 @@ require("hardhat-gas-reporter");
 
 const dotenv = require("dotenv");
 
-// The file named by ENV_FILE is loaded first, so its values win; `.env` only fills in what that
-// file left unset.
-if (process.env.ENV_FILE) {
-  dotenv.config({ path: process.env.ENV_FILE });
+const { envFilesToLoad } = require("./scripts/lib/deployConfig");
+
+// A named ENV_FILE is the only file loaded. `.env` is read only when no file is named.
+for (const path of envFilesToLoad(process.env)) {
+  dotenv.config({ path });
 }
-dotenv.config({ path: ".env" });
 
 const {
   PRIVATE_KEY,
@@ -45,21 +45,6 @@ module.exports = {
 
   etherscan: {
     apiKey: ETHERSCAN_API_KEY || "",
-    customChains: [
-      {
-        network: "base",
-        chainId: 8453,
-        urls: { apiURL: "https://api.basescan.org/api", browserURL: "https://basescan.org" },
-      },
-      {
-        network: "baseSepolia",
-        chainId: 84532,
-        urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
-          browserURL: "https://sepolia.basescan.org",
-        },
-      },
-    ],
   },
 
   gasReporter: {

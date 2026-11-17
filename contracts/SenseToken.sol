@@ -84,6 +84,8 @@ contract SenseToken is
     __Ownable_init(_initialOwner);
     __Ownable2Step_init();
 
+    // Keep the mint after the owner is set: the supply goes to the owner, and the owner must
+    // already be exempt when the rule in {_update} sees it arrive.
     _mint(_initialOwner, _initialSupply);
   }
 

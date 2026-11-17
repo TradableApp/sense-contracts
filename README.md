@@ -59,7 +59,12 @@ bun run coverage
 ## Deploying
 
 The deploy script reads its settings from the file named by `ENV_FILE` (`.env.localnet`,
-`.env.testnet` or `.env.mainnet`), then from `.env`. These files are never committed.
+`.env.testnet` or `.env.mainnet`). A named file is the only one loaded; `.env` is read only when
+no file is named, so a gap in the mainnet file is an error and is never filled from another file.
+These files are never committed.
+
+The settings are checked before anything is sent. A mainnet deploy also needs
+`DEPLOY_MAINNET_CONFIRMED=1`, because the supply is minted once, to the owner, and cannot be undone.
 
 | Variable                               | Meaning                                                                        |
 | -------------------------------------- | ------------------------------------------------------------------------------ |
@@ -78,6 +83,23 @@ bun run deploy:mainnet
 
 After deploying, the owner lists the treasury and each SenseAI escrow with `setTransferExempt`.
 When the owner is not the deployer, the owner does this itself.
+
+## Operating the exempt list
+
+The escrow pays the treasury and refunds wallets, so the list and the escrow's settings have to
+agree. If they do not, calls revert and points can be held where they are.
+
+- **Changing the escrow's treasury:** list the new treasury here first, change it on the escrow,
+  and unlist the old one last.
+- **Never unlist an escrow that still holds pending payments.** Its refunds would revert until it
+  is listed again.
+- **The escrow's owner can undo the rule** by upgrading the escrow, since a listed escrow can send
+  to anyone. Keep the escrow and the token under the same owner.
+- **Never list the owner.** The owner is exempt already, and a listing would stay behind after
+  ownership moves. The list cannot be read back from the chain in one call: rebuild it from
+  `TransferExemptSet` events, and check it whenever ownership changes.
+- **Pausing the token stops SenseAI answers**, because settling an answer moves points.
+- Points sent straight to an escrow, without a prompt, stay there.
 
 ## Licence
 

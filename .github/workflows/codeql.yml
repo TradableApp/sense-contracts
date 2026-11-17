@@ -15,6 +15,9 @@ concurrency:
 jobs:
   analyze:
     name: Analyze
+    # Code scanning is billed per committer on a private repository; this skips it there and
+    # starts by itself if the repository is made public.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -29,9 +32,6 @@ jobs:
         uses: github/codeql-action/init@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
         with:
           languages: javascript-typescript
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
