@@ -23,6 +23,24 @@ describe("SenseToken: a fixed supply", function () {
     expect(SenseToken.interface.getFunction("initialize")).to.not.equal(null);
   });
 
+  it("mints to the named owner and not to whoever deployed, as when a multisig owns it", async function () {
+    const { SenseToken, owner, stranger } = await loadFixture(deploySense);
+    const { upgrades } = require("hardhat");
+
+    const token = await upgrades.deployProxy(
+      SenseToken,
+      [TOKEN_NAME, TOKEN_SYMBOL, INITIAL_SUPPLY, stranger.address],
+      { kind: "uups" },
+    );
+
+    expect(await token.owner()).to.equal(stranger.address);
+    expect(await token.balanceOf(stranger.address)).to.equal(INITIAL_SUPPLY);
+    expect(await token.balanceOf(owner.address)).to.equal(0n);
+    await expect(token.connect(owner).setTransferExempt(owner.address, true))
+      .to.be.revertedWithCustomError(token, "OwnableUnauthorizedAccount")
+      .withArgs(owner.address);
+  });
+
   it("offers no way to mint, burn or hand out in bulk", async function () {
     const { SenseToken } = await loadFixture(deploySense);
 

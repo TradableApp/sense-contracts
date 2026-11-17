@@ -1,6 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 
-const TOKEN_NAME = "SENSE";
+// Name and symbol differ on purpose: with equal values a swap of the two would go unnoticed.
+const TOKEN_NAME = "SENSE Points";
 const TOKEN_SYMBOL = "SENSE";
 const INITIAL_SUPPLY = ethers.parseEther("1000000000");
 

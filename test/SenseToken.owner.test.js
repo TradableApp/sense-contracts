@@ -27,6 +27,15 @@ describe("SenseToken: pausing", function () {
     ).to.be.revertedWithCustomError(token, "EnforcedPause");
   });
 
+  it("reports a forbidden transfer as forbidden even while paused", async function () {
+    const { token, alice, bob } = await loadFixture(deploySense);
+    await token.pause();
+
+    await expect(token.connect(alice).transfer(bob.address, ONE))
+      .to.be.revertedWithCustomError(token, "TransferNotAllowed")
+      .withArgs(alice.address, bob.address);
+  });
+
   it("still allows an approval while paused", async function () {
     const { token, escrow, alice } = await loadFixture(deploySense);
     await token.pause();
