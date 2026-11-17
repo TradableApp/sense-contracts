@@ -25,7 +25,7 @@
     "SenseAI"
   ],
   "author": "Tradable",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "type": "commonjs",
   "engines": {
     "node": ">=18.0.0"

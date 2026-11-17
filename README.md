@@ -1,9 +1,26 @@
-# sense-contracts
+# 🎟️ $SENSE – Points Credit for SenseAI
 
-The `$SENSE` points token: a fixed-supply credit that is spent on SenseAI and cannot be moved
-between holders.
+[![CI](https://img.shields.io/github/actions/workflow/status/TradableApp/sense-contracts/ci.yml?branch=main&label=CI)](https://github.com/TradableApp/sense-contracts/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/TradableApp/sense-contracts.svg)](./LICENSE)
 
-## What the token does
+> Welcome to the public repository for $SENSE, the points credit that is spent on SenseAI, a decentralised AI analyst for crypto traders.
+>
+> $SENSE is an ERC-20 on [Base](https://base.org) with one rule of its own: it cannot be moved between holders. It is earned, and it is spent on SenseAI. It is not sold, it has no cash value, and it carries no right to any other token.
+
+---
+
+## 📦 Features
+
+- Fixed supply, minted once; no mint and no burn
+- Transfers allowed only to or from an exempt address (the owner, the treasury, a SenseAI escrow)
+- Built with [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts)
+- Upgradeable using the UUPS proxy pattern, pausable, two-step ownership
+- Fully tested with Hardhat
+- Open-source under the MIT License
+
+---
+
+## 🔍 What is $SENSE?
 
 `SenseToken` is an upgradeable (UUPS) ERC-20 with 18 decimals. The whole supply is minted once, to
 the owner, when the proxy is initialised. There is no mint and no burn.
@@ -23,7 +40,7 @@ and so is every address the owner lists with `setTransferExempt`.
 The rule looks at where the points leave and where they arrive, never at who called. `approve`
 works as in any ERC-20, so a wallet approves the escrow and the escrow pulls the fee.
 
-## What the rule does not do
+## ⚠️ What the rule does not do
 
 - The owner chooses the exempt addresses and can upgrade the contract, so the rule is as strong as
   the owner key. On a public network the owner should be a multisig.
@@ -33,7 +50,7 @@ works as in any ERC-20, so a wallet approves the escrow and the escrow pulls the
 - A wallet shows SENSE as an ordinary token with a send button. Sending to another wallet fails.
 - A whole wallet can still change hands if its key is handed over. No contract can prevent that.
 
-## Owner functions
+## 🔑 Owner functions
 
 | Function                                               | Effect                                                      |
 | ------------------------------------------------------ | ----------------------------------------------------------- |
@@ -44,7 +61,7 @@ works as in any ERC-20, so a wallet approves the escrow and the escrow pulls the
 
 `renounceOwnership()` always reverts.
 
-## Development
+## 🧪 Development
 
 Node 24 (see `.nvmrc`) and Bun 1.3.14.
 
@@ -56,7 +73,7 @@ bun run lint
 bun run coverage
 ```
 
-## Deploying
+## 🚀 Deploying
 
 The deploy script reads its settings from the file named by `ENV_FILE` (`.env.localnet`,
 `.env.testnet` or `.env.mainnet`). A named file is the only one loaded; `.env` is read only when
@@ -84,7 +101,7 @@ bun run deploy:mainnet
 After deploying, the owner lists the treasury and each SenseAI escrow with `setTransferExempt`.
 When the owner is not the deployer, the owner does this itself.
 
-## Operating the exempt list
+## 🧭 Operating the exempt list
 
 The escrow pays the treasury and refunds wallets, so the list and the escrow's settings have to
 agree. If they do not, calls revert and points can be held where they are.
@@ -101,6 +118,6 @@ agree. If they do not, calls revert and points can be held where they are.
 - **Pausing the token stops SenseAI answers**, because settling an answer moves points.
 - Points sent straight to an escrow, without a prompt, stay there.
 
-## Licence
+## 📄 Licence
 
-Apache-2.0. See `LICENSE`.
+Open-source under the MIT License. See [`LICENSE`](./LICENSE).
