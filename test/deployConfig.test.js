@@ -65,6 +65,65 @@ describe("deploy settings", function () {
   });
 });
 
+describe("a supply written in whole tokens by mistake", function () {
+  // 18 decimals: one token is 10^18 base units. A figure below that is less than one token,
+  // which is what a supply typed in whole tokens looks like, and the mint cannot be redone.
+  it("refuses a supply of less than one whole token", function () {
+    expect(() =>
+      readDeployConfig({ ...complete, INITIAL_SUPPLY: "1000000000" }, "localhost"),
+    ).to.throw("INITIAL_SUPPLY");
+    expect(() =>
+      readDeployConfig({ ...complete, INITIAL_SUPPLY: "999999999999999999" }, "localhost"),
+    ).to.throw("INITIAL_SUPPLY");
+  });
+
+  it("accepts exactly one whole token", function () {
+    const config = readDeployConfig(
+      { ...complete, INITIAL_SUPPLY: "1000000000000000000" },
+      "localhost",
+    );
+
+    expect(config.initialSupply).to.equal(10n ** 18n);
+  });
+});
+
+describe("loading the env files", function () {
+  const fs = require("fs");
+  const os = require("os");
+  const path = require("path");
+  const { loadEnvFiles } = require("../scripts/lib/deployConfig");
+
+  let dir;
+  beforeEach(function () {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "sense-env-"));
+  });
+  afterEach(function () {
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("lets the named file win over a value already in the environment", function () {
+    const file = path.join(dir, "named.env");
+    fs.writeFileSync(file, "OWNER_ADDRESS=from-file\n");
+    const env = { ENV_FILE: file, OWNER_ADDRESS: "from-shell" };
+
+    loadEnvFiles(env);
+
+    expect(env.OWNER_ADDRESS).to.equal("from-file");
+  });
+
+  it("refuses to go on when the named file cannot be read", function () {
+    const env = { ENV_FILE: path.join(dir, "missing.env") };
+
+    expect(() => loadEnvFiles(env)).to.throw("ENV_FILE");
+  });
+
+  it("goes on without complaint when no file is named and there is no .env", function () {
+    const env = {};
+
+    expect(() => loadEnvFiles(env, dir)).to.not.throw();
+  });
+});
+
 describe("which env files are loaded", function () {
   it("loads only the named file when one is named, so no other file can fill a gap in it", function () {
     expect(envFilesToLoad({ ENV_FILE: ".env.mainnet" })).to.deep.equal([".env.mainnet"]);
