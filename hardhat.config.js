@@ -2,14 +2,11 @@ require("@nomicfoundation/hardhat-toolbox");
 require("@openzeppelin/hardhat-upgrades");
 require("hardhat-gas-reporter");
 
-const dotenv = require("dotenv");
+const { loadEnvFiles } = require("./scripts/lib/deployConfig");
 
-const { envFilesToLoad } = require("./scripts/lib/deployConfig");
-
-// A named ENV_FILE is the only file loaded. `.env` is read only when no file is named.
-for (const path of envFilesToLoad(process.env)) {
-  dotenv.config({ path });
-}
+// A named ENV_FILE is the only file loaded, and it wins over the shell. `.env` is read only when
+// no file is named.
+loadEnvFiles(process.env);
 
 const {
   PRIVATE_KEY,

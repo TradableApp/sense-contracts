@@ -50,6 +50,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error);
+  // The message only: a whole provider error can carry the request, and with it an RPC URL.
+  console.error(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;
 });

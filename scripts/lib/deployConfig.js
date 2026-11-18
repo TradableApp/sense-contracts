@@ -1,7 +1,12 @@
+const path = require("path");
+
+const dotenv = require("dotenv");
 const { getAddress, isAddress, ZeroAddress } = require("ethers");
 
 const MAINNET_NETWORK = "base";
 const MAINNET_CONFIRMATION = "DEPLOY_MAINNET_CONFIRMED";
+// 18 decimals: one whole token in base units.
+const ONE_TOKEN = 10n ** 18n;
 
 function isBlank(value) {
   return value === undefined || value === null || String(value).trim() === "";
@@ -13,6 +18,26 @@ function isBlank(value) {
  */
 function envFilesToLoad(env) {
   return isBlank(env.ENV_FILE) ? [".env"] : [env.ENV_FILE.trim()];
+}
+
+/**
+ * Loads the env files into `env`. A named file wins over what the shell already exported, and a
+ * named file that cannot be read stops the run: a mistyped name would otherwise leave the shell's
+ * values, or nothing, in charge of a deploy. With no file named, a missing `.env` is not an error.
+ */
+function loadEnvFiles(env, cwd = process.cwd()) {
+  const named = !isBlank(env.ENV_FILE);
+  for (const file of envFilesToLoad(env)) {
+    const result = dotenv.config({
+      path: path.resolve(cwd, file),
+      processEnv: env,
+      override: named,
+      quiet: true,
+    });
+    if (named && result.error) {
+      throw new Error("The file named by ENV_FILE could not be read.");
+    }
+  }
 }
 
 function required(env, name) {
@@ -37,6 +62,12 @@ function readDeployConfig(env, networkName) {
     );
   }
 
+  if (BigInt(supply) < ONE_TOKEN) {
+    throw new Error(
+      "INITIAL_SUPPLY is less than one whole token. It is given in base units: one billion tokens is 1 followed by 27 zeros.",
+    );
+  }
+
   const owner = required(env, "OWNER_ADDRESS");
   if (!isAddress(owner) || getAddress(owner) === ZeroAddress) {
     throw new Error("OWNER_ADDRESS is not a usable address.");
@@ -51,4 +82,4 @@ function readDeployConfig(env, networkName) {
   return { tokenName, tokenSymbol, initialSupply: BigInt(supply), owner: getAddress(owner) };
 }
 
-module.exports = { readDeployConfig, envFilesToLoad };
+module.exports = { readDeployConfig, envFilesToLoad, loadEnvFiles };

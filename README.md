@@ -76,7 +76,8 @@ bun run coverage
 ## 🚀 Deploying
 
 The deploy script reads its settings from the file named by `ENV_FILE` (`.env.localnet`,
-`.env.testnet` or `.env.mainnet`). A named file is the only one loaded; `.env` is read only when
+`.env.testnet` or `.env.mainnet`). A named file is the only one loaded, it wins over anything
+already exported in the shell, and a name that cannot be read stops the run; `.env` is read only when
 no file is named, so a gap in the mainnet file is an error and is never filled from another file.
 These files are never committed.
 
@@ -112,6 +113,10 @@ agree. If they do not, calls revert and points can be held where they are.
   is listed again.
 - **The escrow's owner can undo the rule** by upgrading the escrow, since a listed escrow can send
   to anyone. Keep the escrow and the token under the same owner.
+- **List the treasury by name, even when the treasury is the owner.** The owner's exemption moves
+  when ownership moves; a treasury that relied on it would stop receiving fees that day.
+- **Before handing ownership over, move the supply** to the new owner or a listed treasury. What an
+  old owner still holds afterwards can only go to an exempt address.
 - **Never list the owner.** The owner is exempt already, and a listing would stay behind after
   ownership moves. The list cannot be read back from the chain in one call: rebuild it from
   `TransferExemptSet` events, and check it whenever ownership changes.
