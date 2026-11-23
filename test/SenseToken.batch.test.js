@@ -96,9 +96,17 @@ describe("SenseToken: an exempt multisig hands points out in a batch", function 
   });
 
   it("sends to three wallets that are not exempt in one transaction", async function () {
-    const { token, tokenAddress, operator, carol, dave, erin, multiSendAddress, wallet } =
-      await loadFixture(deployWithBatchingOwner);
-    const walletAddress = await wallet.getAddress();
+    const {
+      token,
+      tokenAddress,
+      operator,
+      carol,
+      dave,
+      erin,
+      multiSendAddress,
+      wallet,
+      walletAddress,
+    } = await loadFixture(deployWithBatchingOwner);
     const toCarol = ethers.parseEther("100");
     const toDave = ethers.parseEther("250");
     const toErin = ethers.parseEther("400");
@@ -129,9 +137,17 @@ describe("SenseToken: an exempt multisig hands points out in a batch", function 
   });
 
   it("refuses the same batch from a wallet that is not exempt, and nothing moves", async function () {
-    const { token, tokenAddress, operator, carol, dave, erin, multiSendAddress, plainWallet } =
-      await loadFixture(deployWithBatchingOwner);
-    const plainWalletAddress = await plainWallet.getAddress();
+    const {
+      token,
+      tokenAddress,
+      operator,
+      carol,
+      dave,
+      erin,
+      multiSendAddress,
+      plainWallet,
+      plainWalletAddress,
+    } = await loadFixture(deployWithBatchingOwner);
     const batch = packBatch(
       transferCalls(token, tokenAddress, [
         [carol.address, ethers.parseEther("100")],
@@ -151,10 +167,53 @@ describe("SenseToken: an exempt multisig hands points out in a batch", function 
     }
   });
 
+  it("lets a wallet that is not exempt pay exempt addresses in a batch", async function () {
+    const {
+      token,
+      tokenAddress,
+      operator,
+      treasury,
+      escrow,
+      multiSendAddress,
+      plainWallet,
+      plainWalletAddress,
+    } = await loadFixture(deployWithBatchingOwner);
+    const toTreasury = ethers.parseEther("30");
+    const toEscrow = ethers.parseEther("70");
+    const treasuryBefore = await token.balanceOf(treasury.address);
+    const escrowBefore = await token.balanceOf(escrow.address);
+    const batch = packBatch(
+      transferCalls(token, tokenAddress, [
+        [treasury.address, toTreasury],
+        [escrow.address, toEscrow],
+      ]),
+    );
+
+    // The rule allows a transfer when either end is exempt, so the receivers alone carry it.
+    await expect(plainWallet.connect(operator).execBatch(multiSendAddress, batch))
+      .to.emit(token, "Transfer")
+      .withArgs(plainWalletAddress, treasury.address, toTreasury)
+      .and.to.emit(token, "Transfer")
+      .withArgs(plainWalletAddress, escrow.address, toEscrow);
+
+    expect(await token.balanceOf(treasury.address)).to.equal(treasuryBefore + toTreasury);
+    expect(await token.balanceOf(escrow.address)).to.equal(escrowBefore + toEscrow);
+    // 1000 - (30 + 70) = 900 left with the wallet.
+    expect(await token.balanceOf(plainWalletAddress)).to.equal(ethers.parseEther("900"));
+  });
+
   it("reverts the whole batch when one transfer in it fails", async function () {
-    const { token, tokenAddress, operator, carol, dave, erin, multiSendAddress, wallet } =
-      await loadFixture(deployWithBatchingOwner);
-    const walletAddress = await wallet.getAddress();
+    const {
+      token,
+      tokenAddress,
+      operator,
+      carol,
+      dave,
+      erin,
+      multiSendAddress,
+      wallet,
+      walletAddress,
+    } = await loadFixture(deployWithBatchingOwner);
     // 100 + 200 + 800 = 1100, more than the 1000 the wallet holds. The first two would go through
     // on their own; the third finds 1000 - 300 = 700 left and asks for 800.
     const batch = packBatch(
