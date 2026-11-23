@@ -82,6 +82,40 @@ async function deployWithBatchingOwner() {
   };
 }
 
+/**
+ * The token of `deploySense`, with its first owner kept, and a batching wallet that holds FUNDS
+ * and is exempt only because the owner listed it: the treasury of a public network, a multisig
+ * that is not the token's owner.
+ */
+async function deployWithListedTreasuryWallet() {
+  const base = await deploySense();
+  const { token, owner } = base;
+  const [operator, carol, dave, erin] = (await ethers.getSigners()).slice(7, 11);
+  const tokenAddress = await token.getAddress();
+
+  const multiSend = await (await ethers.getContractFactory("TestMultiSendCallOnly")).deploy();
+  const wallet = await (
+    await ethers.getContractFactory("TestBatchWallet")
+  ).deploy(operator.address);
+  const multiSendAddress = await multiSend.getAddress();
+  const walletAddress = await wallet.getAddress();
+
+  await token.connect(owner).transfer(walletAddress, FUNDS);
+  await token.connect(owner).setTransferExempt(walletAddress, true);
+
+  return {
+    ...base,
+    tokenAddress,
+    operator,
+    carol,
+    dave,
+    erin,
+    multiSendAddress,
+    wallet,
+    walletAddress,
+  };
+}
+
 describe("SenseToken: an exempt multisig hands points out in a batch", function () {
   it("sets up the wallet as the owner, exempt, and the receivers as not exempt", async function () {
     const { token, walletAddress, plainWalletAddress, carol, dave, erin } =
@@ -262,5 +296,47 @@ describe("SenseToken: an exempt multisig hands points out in a batch", function 
     for (const receiver of [carol, dave, erin]) {
       expect(await token.balanceOf(receiver.address)).to.equal(amount);
     }
+  });
+
+  it("sends a batch from a listed treasury that is not the owner", async function () {
+    const {
+      token,
+      tokenAddress,
+      owner,
+      operator,
+      carol,
+      dave,
+      erin,
+      multiSendAddress,
+      wallet,
+      walletAddress,
+    } = await loadFixture(deployWithListedTreasuryWallet);
+    // The owner's exemption and a listing are separate cases of the rule: this wallet has only
+    // the listing.
+    expect(await token.owner()).to.equal(owner.address);
+    const toCarol = ethers.parseEther("100");
+    const toDave = ethers.parseEther("250");
+    const toErin = ethers.parseEther("400");
+    const batch = packBatch(
+      transferCalls(token, tokenAddress, [
+        [carol.address, toCarol],
+        [dave.address, toDave],
+        [erin.address, toErin],
+      ]),
+    );
+
+    await expect(wallet.connect(operator).execBatch(multiSendAddress, batch))
+      .to.emit(token, "Transfer")
+      .withArgs(walletAddress, carol.address, toCarol)
+      .and.to.emit(token, "Transfer")
+      .withArgs(walletAddress, dave.address, toDave)
+      .and.to.emit(token, "Transfer")
+      .withArgs(walletAddress, erin.address, toErin);
+    expect(await token.balanceOf(carol.address)).to.equal(toCarol);
+    expect(await token.balanceOf(dave.address)).to.equal(toDave);
+    expect(await token.balanceOf(erin.address)).to.equal(toErin);
+    // 1000 - (100 + 250 + 400) = 250 left with the wallet.
+    expect(await token.balanceOf(walletAddress)).to.equal(ethers.parseEther("250"));
+    expect(await token.isTransferExempt(walletAddress)).to.equal(true);
   });
 });
