@@ -17,6 +17,8 @@ contract TestMultiSendCallOnly {
 
   /**
    * @notice Makes each packed call in order and reverts all of them if one fails.
+   * @dev Meant to be reached by delegatecall. Called directly, each call is made by this contract,
+   *      not by the wallet.
    * @param transactions The packed calls.
    */
   function multiSend(bytes calldata transactions) external payable {
