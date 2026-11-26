@@ -46,5 +46,8 @@
     "prettier-plugin-solidity": "^2.0.0",
     "solhint": "^6.0.0",
     "solidity-coverage": "^0.8.16"
+  },
+  "overrides": {
+    "lodash": "4.18.1"
   }
 }
